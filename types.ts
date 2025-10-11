@@ -1,8 +1,6 @@
 
-export interface TrendPrediction {
+export interface Trend {
   trendName: string;
-  trendScore: number;
-  analysis: string;
-  stylingSuggestions: string[];
-  longevity: string;
+  description: string;
+  recommendations: string[];
 }
