@@ -1,10 +1,3 @@
-export interface Trend {
-  trendName: string;
-  description: string;
-  recommendations: string[];
-}
-
-// Shopping types
 export interface Product {
   id: string;
   name: string;

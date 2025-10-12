@@ -3,7 +3,10 @@ import { predictTrendsFromImages } from '../services/geminiService';
 import { speakUploadMessage, speakTrendResults } from '../services/elevenLabsService';
 import { useVoiceSettings } from '../context/VoiceSettingsContext';
 import VoiceSettingsModal from '../components/VoiceSettingsModal';
-import type { Trend } from '../types';
+import TierSelector from '../components/TierSelector';
+import ShoppingResults from '../components/ShoppingResults';
+import { searchAndCategorizeForTrends } from '../services/shoppingOrchestrator';
+import type { Trend, ShoppingResults as ShoppingResultsType } from '../types';
 import TrendResultCard from '../components/TrendResultCard';
 
 const PlusIcon: React.FC = () => (
@@ -42,6 +45,11 @@ const DashboardPage: React.FC = () => {
     const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
     
+    // Shopping states
+    const [selectedTiers, setSelectedTiers] = useState<('luxury' | 'mid' | 'accessible')[]>(['accessible', 'mid']);
+    const [shoppingResults, setShoppingResults] = useState<ShoppingResultsType | null>(null);
+    const [isLoadingShopping, setIsLoadingShopping] = useState(false);
+    
     const { settings } = useVoiceSettings();
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,6 +61,7 @@ const DashboardPage: React.FC = () => {
             setPreviews(newPreviews);
             
             setTrends(null);
+            setShoppingResults(null); // Reset shopping results when new images are uploaded
             setError(null);
 
             // Play upload message with current settings
@@ -90,6 +99,7 @@ const DashboardPage: React.FC = () => {
         setLoadingMessage("Our AI stylist is analyzing your vibe...");
         setError(null);
         setTrends(null);
+        setShoppingResults(null); // Reset shopping results
 
         try {
             const imagePayloads = await Promise.all(
@@ -126,6 +136,26 @@ const DashboardPage: React.FC = () => {
             setLoadingMessage('');
         }
     }, [files, settings]);
+
+    const handleFindProducts = async () => {
+        if (!trends || selectedTiers.length === 0) return;
+
+        setIsLoadingShopping(true);
+        setError(null);
+        
+        try {
+            const results = await searchAndCategorizeForTrends(trends, {
+                selectedTiers,
+                maxResults: 10,
+            });
+            setShoppingResults(results);
+        } catch (error) {
+            console.error('Error finding products:', error);
+            setError('Failed to find products. Please try again.');
+        } finally {
+            setIsLoadingShopping(false);
+        }
+    };
 
     return (
         <div className="container mx-auto px-6 py-12">
@@ -221,14 +251,50 @@ const DashboardPage: React.FC = () => {
             {error && <p className="text-center text-red-500 mt-8">{error}</p>}
             
             {trends && (
-                <div className="mt-16">
-                    <h2 className="text-3xl font-bold text-center mb-8 tracking-tight">Your Predicted Trends</h2>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        {trends.map((trend, index) => (
-                           <TrendResultCard key={index} trend={trend} index={index}/>
-                        ))}
+                <>
+                    <div className="mt-16">
+                        <h2 className="text-3xl font-bold text-center mb-8 tracking-tight">Your Predicted Trends</h2>
+                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                            {trends.map((trend, index) => (
+                               <TrendResultCard key={index} trend={trend} index={index}/>
+                            ))}
+                        </div>
                     </div>
-                </div>
+
+                    {/* Shopping Section */}
+                    <div className="mt-16 border-t pt-16">
+                        <h2 className="text-3xl font-bold text-center mb-8">Find Your Perfect Pieces</h2>
+                        
+                        <TierSelector 
+                            selectedTiers={selectedTiers}
+                            onChange={setSelectedTiers}
+                        />
+
+                        <div className="text-center">
+                            <button
+                                onClick={handleFindProducts}
+                                disabled={isLoadingShopping || selectedTiers.length === 0}
+                                className="px-12 py-4 bg-black text-white font-semibold tracking-wider uppercase border border-black hover:bg-white hover:text-black transition-colors duration-300 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            >
+                                {isLoadingShopping ? 'Finding Products...' : 'Find Products'}
+                            </button>
+                        </div>
+
+                        {isLoadingShopping && (
+                            <div className="text-center py-12">
+                                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+                                <p className="mt-4 text-gray-600">Searching the internet for your perfect pieces...</p>
+                            </div>
+                        )}
+
+                        {shoppingResults && (
+                            <ShoppingResults 
+                                results={shoppingResults}
+                                selectedTiers={selectedTiers}
+                            />
+                        )}
+                    </div>
+                </>
             )}
         </div>
     );
