@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
 
@@ -21,6 +20,13 @@ const Header: React.FC = () => {
             className="hover:text-gray-500 transition-colors duration-300"
           >
             Stylist + Dashboard
+          </NavLink>
+          <NavLink 
+            to="/seasonal-forecast"
+            style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
+            className="hover:text-gray-500 transition-colors duration-300"
+          >
+            Seasonal Forecast
           </NavLink>
           <NavLink 
             to="/sustainability"
