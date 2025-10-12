@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { predictTrendsFromImages, generateTrendImage } from '../services/geminiService';
+import { predictTrendsFromImages } from '../services/geminiService';
 import type { Trend } from '../types';
 import TrendResultCard from '../components/TrendResultCard';
 
@@ -58,21 +58,8 @@ const DashboardPage: React.FC = () => {
                 }))
             );
 
-            const initialTrends = await predictTrendsFromImages(imagePayloads);
-
-            setLoadingMessage("Generating personalized trend images...");
-
-            const trendsWithImages = await Promise.all(
-                initialTrends.map(async (trend) => {
-                    const imageBase64 = await generateTrendImage(trend.trendName);
-                    return {
-                        ...trend,
-                        imageUrl: `data:image/jpeg;base64,${imageBase64}`,
-                    };
-                })
-            );
-
-            setTrends(trendsWithImages);
+            const predictedTrends = await predictTrendsFromImages(imagePayloads);
+            setTrends(predictedTrends);
         } catch (e) {
             const err = e as Error;
             setError(err.message || 'An unknown error occurred.');

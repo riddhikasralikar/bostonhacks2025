@@ -23,12 +23,8 @@ const trendSchema = {
           type: Type.STRING,
         },
       },
-      imageSearchTerm: {
-        type: Type.STRING,
-        description: "A concise, 3-4 word search term for Unsplash that will find a high-quality photo of relevant clothing, preferably in a street style or editorial context. E.g., 'street style oversized blazer', 'woman wearing leather trousers', 'close-up silk slip dress'."
-      }
     },
-    required: ["trendName", "description", "recommendations", "imageSearchTerm"],
+    required: ["trendName", "description", "recommendations"],
   },
 };
 
@@ -53,7 +49,7 @@ export const predictTrendsFromImages = async (
 
   const imageParts = images.map(img => fileToGenerativePart(img.base64, img.mimeType));
 
-  const prompt = `You are an expert fashion trend forecaster. Analyze the provided images from a user's style inspiration board. Identify 4 key emerging fashion trends based on the items, aesthetics, colors, and silhouettes in these images. For each trend, provide a name, a short description, 3 product recommendations, and a concise, highly specific 3-4 word search term for a stock photo service to find a relevant photo of clothing for this trend (e.g., 'street style oversized blazer'). Return the response as a JSON object that adheres to the provided schema.`;
+  const prompt = `You are an expert fashion trend forecaster. Analyze the provided images from a user's style inspiration board. Identify 4 key emerging fashion trends based on the items, aesthetics, colors, and silhouettes in these images. For each trend, provide a name, a short description, and 3 product recommendations. Return the response as a JSON object that adheres to the provided schema.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -106,7 +102,7 @@ export const predictSeasonalTrends = async (): Promise<Trend[]> => {
     }
 
     const nextSeason = getNextSeason();
-    const prompt = `You are a world-class fashion trend forecaster. Predict the 4 most important fashion trends for the upcoming ${nextSeason} season. For each trend, provide a catchy name, a concise description, 3 product recommendations, and a concise, highly specific 3-4 word search term for a stock photo service to find a relevant photo of clothing for this trend (e.g., 'woman wearing leather trousers'). Return the response as a JSON object that adheres to the provided schema.`;
+    const prompt = `You are a world-class fashion trend forecaster. Predict the 4 most important fashion trends for the upcoming ${nextSeason} season. For each trend, provide a catchy name, a concise description, and 3 product recommendations. Return the response as a JSON object that adheres to the provided schema.`;
 
     try {
         const response = await ai.models.generateContent({
@@ -125,33 +121,4 @@ export const predictSeasonalTrends = async (): Promise<Trend[]> => {
         console.error("Error calling Gemini API for seasonal trends:", error);
         throw new Error("Failed to forecast seasonal trends. Please try again.");
     }
-};
-
-export const generateTrendImage = async (trendName: string): Promise<string> => {
-  if (!process.env.API_KEY) {
-    throw new Error("API_KEY is not set in environment variables.");
-  }
-  
-  const prompt = `A high-quality, editorial fashion photograph of an outfit representing the '${trendName}' trend. Street style, clean background, focus on the clothing.`;
-
-  try {
-    const response = await ai.models.generateImages({
-      model: 'imagen-4.0-generate-001',
-      prompt: prompt,
-      config: {
-        numberOfImages: 1,
-        outputMimeType: 'image/jpeg',
-        aspectRatio: '1:1',
-      },
-    });
-
-    if (response.generatedImages && response.generatedImages.length > 0) {
-      return response.generatedImages[0].image.imageBytes;
-    } else {
-      throw new Error("Image generation failed to return an image.");
-    }
-  } catch (error) {
-    console.error(`Error generating image for trend "${trendName}":`, error);
-    throw new Error(`Failed to generate an image for the trend: ${trendName}.`);
-  }
 };
