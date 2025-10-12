@@ -1,7 +1,13 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Trend } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+// Add fallback for API key
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+if (!apiKey) {
+  console.error("VITE_GEMINI_API_KEY is missing from environment variables");
+}
+
+const ai = new GoogleGenAI({ apiKey: apiKey || '' });
 
 const trendSchema = {
   type: Type.ARRAY,
@@ -40,9 +46,12 @@ const fileToGenerativePart = (base64: string, mimeType: string) => {
 export const predictTrendsFromImages = async (
   images: { base64: string; mimeType: string }[]
 ): Promise<Trend[]> => {
-  if (!process.env.API_KEY) {
-    throw new Error("API_KEY is not set in environment variables.");
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error("VITE_GEMINI_API_KEY is not set in environment variables.");
   }
+  
   if (images.length === 0) {
     throw new Error("At least one image is required to predict trends.");
   }
@@ -53,7 +62,7 @@ export const predictTrendsFromImages = async (
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.0-flash-exp",
       contents: {
         parts: [
           ...imageParts,
@@ -97,28 +106,30 @@ const getNextSeason = (): string => {
 };
 
 export const predictSeasonalTrends = async (): Promise<Trend[]> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY is not set in environment variables.");
-    }
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error("VITE_GEMINI_API_KEY is not set in environment variables.");
+  }
 
-    const nextSeason = getNextSeason();
-    const prompt = `You are a world-class fashion trend forecaster. Predict the 4 most important fashion trends for the upcoming ${nextSeason} season. For each trend, provide a catchy name, a concise description, and 3 product recommendations. Return the response as a JSON object that adheres to the provided schema.`;
+  const nextSeason = getNextSeason();
+  const prompt = `You are a world-class fashion trend forecaster. Predict the 4 most important fashion trends for the upcoming ${nextSeason} season. For each trend, provide a catchy name, a concise description, and 3 product recommendations. Return the response as a JSON object that adheres to the provided schema.`;
 
-    try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: { parts: [{ text: prompt }] },
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: trendSchema,
-            },
-        });
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: { parts: [{ text: prompt }] },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: trendSchema,
+      },
+    });
 
-        const jsonText = response.text.trim();
-        const trends: Trend[] = JSON.parse(jsonText);
-        return trends;
-    } catch (error) {
-        console.error("Error calling Gemini API for seasonal trends:", error);
-        throw new Error("Failed to forecast seasonal trends. Please try again.");
-    }
+    const jsonText = response.text.trim();
+    const trends: Trend[] = JSON.parse(jsonText);
+    return trends;
+  } catch (error) {
+    console.error("Error calling Gemini API for seasonal trends:", error);
+    throw new Error("Failed to forecast seasonal trends. Please try again.");
+  }
 };
