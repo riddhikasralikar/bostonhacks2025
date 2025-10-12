@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { Product } from '../types';
 
-// Use your serverless function URL
+// Use the environment variable for the API endpoint
 const API_ENDPOINT = '/api/search';
 
 interface SerpApiProduct {
@@ -37,32 +37,36 @@ export const searchProducts = async (
   maxResults: number = 30
 ): Promise<Product[]> => {
   try {
-    console.log(`Searching for: "${query}"`);
+    console.log(`🔍 Searching for: "${query}" using endpoint: ${API_ENDPOINT}`);
     
     let response = await axios.get<SerpApiResponse>(API_ENDPOINT, {
       params: {
         query,
         maxResults: Math.min(maxResults, 100),
       },
+      timeout: 30000, // 30 second timeout
     });
 
     let results: SerpApiProduct[] = response.data.shopping_results || [];
     
     if (results.length === 0) {
       const fallbackQuery = generateFallbackQuery(query);
-      console.log(`No results found. Trying broader search: "${fallbackQuery}"`);
+      console.log(`⚠️ No results found. Trying broader search: "${fallbackQuery}"`);
+      
+      await delay(1000); // Wait before retry
       
       response = await axios.get<SerpApiResponse>(API_ENDPOINT, {
         params: {
           query: fallbackQuery,
           maxResults: Math.min(maxResults, 100),
         },
+        timeout: 30000,
       });
       
       results = response.data.shopping_results || [];
     }
     
-    console.log(`Found ${results.length} products for "${query}"`);
+    console.log(`✅ Found ${results.length} products for "${query}"`);
     
     await delay(200);
 
@@ -82,8 +86,11 @@ export const searchProducts = async (
       };
     });
   } catch (error: any) {
-    console.error('Error searching products:', error);
-    throw new Error('Failed to search for products. Please try again.');
+    console.error('❌ Error searching products:', error.message);
+    if (error.response) {
+      console.error('Response error:', error.response.status, error.response.data);
+    }
+    throw new Error(`Failed to search for "${query}": ${error.message}`);
   }
 };
 

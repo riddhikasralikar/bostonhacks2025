@@ -20,7 +20,16 @@ const rateLimitedSearch = async (query: string, maxResults: number): Promise<any
   }
   
   lastRequestTime = Date.now();
-  return await searchProducts(query, maxResults);
+  
+  try {
+    const results = await searchProducts(query, maxResults);
+    console.log(`✅ Successfully fetched ${results.length} products for "${query}"`);
+    return results;
+  } catch (error) {
+    console.error(`❌ Failed to fetch products for "${query}":`, error);
+    // Return empty array instead of throwing to allow other searches to continue
+    return [];
+  }
 };
 
 export const searchAndCategorizeForTrends = async (
@@ -36,49 +45,87 @@ export const searchAndCategorizeForTrends = async (
     },
   };
 
+  console.log('🚀 Starting shopping search for trends:', trends.map(t => t.trendName).join(', '));
+  console.log('💰 Selected price tiers:', filters.selectedTiers.join(', '));
+
   try {
     // Process specific items for all trends
     let itemCount = 0;
-    const totalItems = trends.reduce((sum, trend) => sum + trend.recommendations.length, 0);
+    const totalItems = trends.reduce((sum, trend) => sum + Math.min(trend.recommendations.length, 5), 0);
+    
+    console.log(`📊 Total items to search: ${totalItems}`);
     
     for (const trend of trends) {
+      console.log(`\n🎯 Processing trend: "${trend.trendName}"`);
+      
       // Limit to first 5 items per trend to reduce API calls
       const itemsToSearch = trend.recommendations.slice(0, 5);
+      console.log(`   Items to search: ${itemsToSearch.join(', ')}`);
       
       for (const item of itemsToSearch) {
         itemCount++;
-        console.log(`🔍 Searching ${itemCount}/${totalItems}: ${item}`);
+        console.log(`\n📍 [${itemCount}/${totalItems}] Searching: "${item}"`);
         
-        const products = await rateLimitedSearch(item, 20); // Reduced from 30 to 20
+        const products = await rateLimitedSearch(item, 20);
+        
+        if (products.length === 0) {
+          console.warn(`⚠️ No products found for "${item}"`);
+          results.specificItems[item] = {
+            luxury: [],
+            mid: [],
+            accessible: [],
+          };
+          continue;
+        }
+        
         const deduped = deduplicateProducts(products);
         const categorized = categorizeProducts(deduped);
         const filtered = filterByTiers(categorized, filters.selectedTiers);
         const limited = limitResultsPerTier(filtered, filters.maxResults || 5);
         
         results.specificItems[item] = limited;
+        
+        console.log(`   ✅ Found: ${limited.luxury.length} luxury, ${limited.mid.length} mid, ${limited.accessible.length} accessible`);
       }
     }
 
     // Process vibe matches (fewer queries to reduce API calls)
+    console.log('\n✨ Generating vibe matches...');
+    
     for (const trend of trends) {
-      console.log(`✨ Generating vibe queries for: ${trend.trendName}`);
+      console.log(`\n🎨 Generating vibe queries for: "${trend.trendName}"`);
       
-      const vibeQueries = await generateVibeQueries(trend, 2); // Reduced from 5 to 2
-      
-      for (const query of vibeQueries) {
-        console.log(`🔍 Searching vibe: ${query}`);
+      try {
+        const vibeQueries = await generateVibeQueries(trend, 2); // Reduced from 5 to 2
+        console.log(`   Generated queries: ${vibeQueries.join(', ')}`);
         
-        const products = await rateLimitedSearch(query, 15); // Reduced from 20 to 15
-        const deduped = deduplicateProducts(products);
-        const categorized = categorizeProducts(deduped);
-        
-        filters.selectedTiers.forEach(tier => {
-          results.vibeMatches[tier].push(...categorized[tier]);
-        });
+        for (const query of vibeQueries) {
+          console.log(`   🔍 Searching vibe: "${query}"`);
+          
+          const products = await rateLimitedSearch(query, 15); // Reduced from 20 to 15
+          
+          if (products.length === 0) {
+            console.warn(`   ⚠️ No products found for vibe query "${query}"`);
+            continue;
+          }
+          
+          const deduped = deduplicateProducts(products);
+          const categorized = categorizeProducts(deduped);
+          
+          filters.selectedTiers.forEach(tier => {
+            results.vibeMatches[tier].push(...categorized[tier]);
+          });
+          
+          console.log(`   ✅ Added ${deduped.length} products to vibe matches`);
+        }
+      } catch (error) {
+        console.error(`   ❌ Failed to generate vibe queries for "${trend.trendName}":`, error);
+        // Continue with other trends even if this one fails
       }
     }
 
     // Deduplicate and limit final vibe matches
+    console.log('\n🔄 Deduplicating and limiting vibe matches...');
     results.vibeMatches = limitResultsPerTier(
       {
         luxury: deduplicateProducts(results.vibeMatches.luxury),
@@ -88,10 +135,12 @@ export const searchAndCategorizeForTrends = async (
       filters.maxResults || 10
     );
 
-    console.log('✅ All searches complete!');
+    console.log('\n🎉 All searches complete!');
+    console.log(`📦 Total specific items: ${Object.keys(results.specificItems).length}`);
+    console.log(`✨ Total vibe matches: ${results.vibeMatches.luxury.length + results.vibeMatches.mid.length + results.vibeMatches.accessible.length}`);
 
   } catch (error) {
-    console.error('Error in shopping orchestrator:', error);
+    console.error('💥 Fatal error in shopping orchestrator:', error);
     throw error;
   }
 

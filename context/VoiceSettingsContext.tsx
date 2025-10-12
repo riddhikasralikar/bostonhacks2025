@@ -13,21 +13,21 @@ export const AVAILABLE_STYLISTS: VoiceStylist[] = [
   {
     id: 'Miranda Priestly',
     name: 'Miranda',
-    voiceId: 'ukLbKbCVDcW4vOKUeSXd',
+    voiceId: 'pSLoDT19w0D4NKjmynSw',
     description: 'Fashion icon. Icy, commanding, devastatingly precise.',
     accent: 'Trans-Atlantic'
   },
   {
     id: 'NYC Stylist',
     name: 'Bella',
-    voiceId: 'dFsSR6K9vWvrFrwPv0OM',
+    voiceId: 'fXC6rtFTWd7FXQm7P1PQ',
     description: 'Friendly and honest, the most NYC Stylist',
     accent: 'American'
   },
   {
     id: 'LA Stylist',
     name: 'Skylar',
-    voiceId: 'lP67HJEmataz023RLboB',
+    voiceId: 'PayTkRshUknJSMKYOVpA',
     description: 'Laid back, chill yet chic',
     accent: 'American'
   },

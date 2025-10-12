@@ -35,27 +35,29 @@ export const speakText = async (options: ElevenLabsOptions): Promise<void> => {
   }
 
   try {
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
-      {
-        method: "POST",
-        headers: {
-          "Accept": "audio/mpeg",
-          "Content-Type": "application/json",
-          "xi-api-key": ELEVENLABS_API_KEY,
+    // ✅ FIXED: Define the URL
+    const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'audio/mpeg',
+        'Content-Type': 'application/json',
+        'xi-api-key': ELEVENLABS_API_KEY,
+      },
+      body: JSON.stringify({
+        text: text,
+        model_id: 'eleven_multilingual_v2', // Changed to multilingual for language support
+        voice_settings: {
+          stability: stability,
+          similarity_boost: similarityBoost,
         },
-        body: JSON.stringify({
-          text,
-          model_id: "eleven_multilingual_v2",
-          voice_settings: {
-            stability,
-            similarity_boost: similarityBoost,
-          },
-        }),
-      }
-    );
+      }),
+    });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('ElevenLabs API error:', errorText);
       throw new Error(`ElevenLabs API error: ${response.statusText}`);
     }
 
@@ -71,8 +73,11 @@ export const speakText = async (options: ElevenLabsOptions): Promise<void> => {
         URL.revokeObjectURL(audioUrl);
         resolve();
       };
-      audio.onerror = reject;
-      audio.play();
+      audio.onerror = (error) => {
+        URL.revokeObjectURL(audioUrl);
+        reject(error);
+      };
+      audio.play().catch(reject);
     });
   } catch (error) {
     console.error("Error generating speech:", error);
