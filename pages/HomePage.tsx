@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -28,14 +27,9 @@ const HomePage: React.FC = () => {
         <p className="text-xl text-gray-600 mb-8 max-w-2xl">
           Discover what's next in fashion with our data-driven insights.
         </p>
-        <div className="flex space-x-4">
-          <Link to="/dashboard" className="px-8 py-3 bg-black text-white font-semibold tracking-wider uppercase border border-black hover:bg-white hover:text-black transition-colors duration-300">
-            Upload Pinterest Board
-          </Link>
-          <a href="#how-it-works" className="px-8 py-3 font-semibold tracking-wider uppercase border border-black hover:bg-black hover:text-white transition-colors duration-300">
-            See How It Works
-          </a>
-        </div>
+        <Link to="/dashboard" className="px-8 py-3 bg-black text-white font-semibold tracking-wider uppercase border border-black hover:bg-white hover:text-black transition-colors duration-300">
+          Upload Images
+        </Link>
         <div className="absolute bottom-10 animate-bounce">
           <ArrowDownIcon />
         </div>
@@ -55,30 +49,6 @@ const HomePage: React.FC = () => {
             Find eco-friendly brands and learn how to upcycle your wardrobe with our sustainability hub.
           </FeatureCard>
         </div>
-      </section>
-      
-      {/* How It Works Section */}
-      <section id="how-it-works" className="py-24 text-center">
-        <h2 className="text-4xl font-bold mb-4 tracking-tight">How it works?</h2>
-        <p className="text-lg text-gray-600 mb-12">Super easy.</p>
-        <div className="relative flex justify-between items-center max-w-4xl mx-auto mb-16">
-          <div className="absolute top-1/2 left-0 w-full h-px bg-gray-300 -translate-y-1/2"></div>
-          <div className="relative text-center">
-            <div className="w-16 h-16 bg-white border-2 border-black rounded-full flex items-center justify-center mx-auto mb-2 text-xl font-bold">1</div>
-            <p className="font-semibold uppercase tracking-wider">Upload Your Inspo</p>
-          </div>
-          <div className="relative text-center">
-            <div className="w-16 h-16 bg-white border-2 border-black rounded-full flex items-center justify-center mx-auto mb-2 text-xl font-bold">2</div>
-            <p className="font-semibold uppercase tracking-wider">Trend Analysis</p>
-          </div>
-          <div className="relative text-center">
-            <div className="w-16 h-16 bg-white border-2 border-black rounded-full flex items-center justify-center mx-auto mb-2 text-xl font-bold">3</div>
-            <p className="font-semibold uppercase tracking-wider">Get Recs</p>
-          </div>
-        </div>
-        <Link to="/dashboard" className="inline-block px-16 py-6 bg-black text-white text-2xl font-bold tracking-widest uppercase border-2 border-black hover:bg-white hover:text-black transition-colors duration-300">
-          Start Predicting Trends
-        </Link>
       </section>
     </div>
   );
