@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { predictTrendsFromImages } from '../services/geminiService';
+import { predictTrendsFromImages, generateTrendImage } from '../services/geminiService';
 import type { Trend } from '../types';
 import TrendResultCard from '../components/TrendResultCard';
 
@@ -15,10 +15,11 @@ const DashboardPage: React.FC = () => {
     const [trends, setTrends] = useState<Trend[] | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [loadingMessage, setLoadingMessage] = useState<string>('');
+
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files) {
-            // FIX: Use spread syntax to convert the FileList to an array, ensuring proper type inference for files.
             const selectedFiles = [...event.target.files];
             setFiles(selectedFiles);
             
@@ -45,6 +46,7 @@ const DashboardPage: React.FC = () => {
         }
 
         setIsLoading(true);
+        setLoadingMessage("Our AI stylist is analyzing your vibe...");
         setError(null);
         setTrends(null);
 
@@ -56,13 +58,27 @@ const DashboardPage: React.FC = () => {
                 }))
             );
 
-            const result = await predictTrendsFromImages(imagePayloads);
-            setTrends(result);
+            const initialTrends = await predictTrendsFromImages(imagePayloads);
+
+            setLoadingMessage("Generating personalized trend images...");
+
+            const trendsWithImages = await Promise.all(
+                initialTrends.map(async (trend) => {
+                    const imageBase64 = await generateTrendImage(trend.trendName);
+                    return {
+                        ...trend,
+                        imageUrl: `data:image/jpeg;base64,${imageBase64}`,
+                    };
+                })
+            );
+
+            setTrends(trendsWithImages);
         } catch (e) {
             const err = e as Error;
             setError(err.message || 'An unknown error occurred.');
         } finally {
             setIsLoading(false);
+            setLoadingMessage('');
         }
     }, [files]);
 
@@ -117,7 +133,7 @@ const DashboardPage: React.FC = () => {
             {isLoading && (
                  <div className="text-center py-12">
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
-                    <p className="mt-4 text-gray-600">Our AI stylist is analyzing your vibe...</p>
+                    <p className="mt-4 text-gray-600">{loadingMessage}</p>
                  </div>
             )}
             

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { Trend } from '../types';
 
@@ -7,12 +6,16 @@ interface TrendResultCardProps {
   index: number;
 }
 
-const TrendResultCard: React.FC<TrendResultCardProps> = ({ trend, index }) => {
+const TrendResultCard: React.FC<TrendResultCardProps> = ({ trend }) => {
+  // The image URL is now expected to be provided directly in the trend object from the AI image generation step.
+  // A placeholder is used as a fallback in case the imageUrl is unexpectedly missing.
+  const imageUrl = trend.imageUrl || `https://via.placeholder.com/400?text=Image+Not+Found`;
+
   return (
     <div className="border border-gray-200 p-6 flex flex-col h-full">
       <div className="relative w-full aspect-square mb-4 bg-gray-100">
          <img 
-            src={`https://picsum.photos/seed/${trend.trendName}${index}/400/400`} 
+            src={imageUrl} 
             alt={trend.trendName}
             className="w-full h-full object-cover"
          />
