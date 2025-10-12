@@ -4,11 +4,12 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
-  // Enable CORS
+  // CRITICAL: Enable CORS first
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+  // Handle preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -16,8 +17,11 @@ export default async function handler(
   const { query, maxResults = 30 } = req.query;
   const SERPAPI_KEY = process.env.SERPAPI_KEY;
 
+  console.log('Env var exists:', !!SERPAPI_KEY);
+  console.log('Query:', query);
+
   if (!SERPAPI_KEY) {
-    return res.status(500).json({ error: 'SERPAPI_KEY not configured' });
+    return res.status(500).json({ error: 'SERPAPI_KEY not configured on server' });
   }
 
   if (!query) {
