@@ -1,7 +1,8 @@
 import axios from 'axios';
 import type { Product } from '../types';
 
-const SERPAPI_KEY = import.meta.env.VITE_SERPAPI_KEY;
+// Use your serverless function URL
+const API_ENDPOINT = '/api/search';
 
 interface SerpApiProduct {
   position: number;
@@ -9,21 +10,16 @@ interface SerpApiProduct {
   link: string;
   product_link: string;
   product_id: string;
-  serpapi_product_api?: string;
   source: string;
   price?: string;
   extracted_price?: number;
   rating?: number;
   reviews?: number;
   thumbnail?: string;
-  delivery?: string;
 }
 
 interface SerpApiResponse {
   shopping_results?: SerpApiProduct[];
-  search_metadata: {
-    status: string;
-  };
 }
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -40,54 +36,34 @@ export const searchProducts = async (
   query: string,
   maxResults: number = 30
 ): Promise<Product[]> => {
-  if (!SERPAPI_KEY) {
-    throw new Error('VITE_SERPAPI_KEY is not set in environment variables.');
-  }
-
   try {
     console.log(`Searching for: "${query}"`);
     
-    let response = await axios.get<SerpApiResponse>(
-      'https://serpapi.com/search',
-      {
-        params: {
-          engine: 'google_shopping',
-          q: query,
-          api_key: SERPAPI_KEY,
-          num: Math.min(maxResults, 100),
-          gl: 'us', // Country: United States
-          hl: 'en', // Language: English
-        },
-      }
-    );
+    let response = await axios.get<SerpApiResponse>(API_ENDPOINT, {
+      params: {
+        query,
+        maxResults: Math.min(maxResults, 100),
+      },
+    });
 
     let results: SerpApiProduct[] = response.data.shopping_results || [];
     
-    // If no results, try a broader search
     if (results.length === 0) {
       const fallbackQuery = generateFallbackQuery(query);
       console.log(`No results found. Trying broader search: "${fallbackQuery}"`);
       
-      response = await axios.get<SerpApiResponse>(
-        'https://serpapi.com/search',
-        {
-          params: {
-            engine: 'google_shopping',
-            q: fallbackQuery,
-            api_key: SERPAPI_KEY,
-            num: Math.min(maxResults, 100),
-            gl: 'us',
-            hl: 'en',
-          },
-        }
-      );
+      response = await axios.get<SerpApiResponse>(API_ENDPOINT, {
+        params: {
+          query: fallbackQuery,
+          maxResults: Math.min(maxResults, 100),
+        },
+      });
       
       results = response.data.shopping_results || [];
     }
     
     console.log(`Found ${results.length} products for "${query}"`);
     
-    // Add a small delay to avoid rate limiting
     await delay(200);
 
     return results.map(item => {
@@ -106,17 +82,6 @@ export const searchProducts = async (
       };
     });
   } catch (error: any) {
-    if (error.response) {
-      console.error('API Error Response:', error.response.data);
-      console.error('API Error Status:', error.response.status);
-      
-      if (error.response.status === 429) {
-        throw new Error('Rate limit exceeded. Please wait a moment and try again.');
-      } else if (error.response.status === 401 || error.response.status === 403) {
-        throw new Error('API key is invalid or quota exceeded.');
-      }
-    }
-    
     console.error('Error searching products:', error);
     throw new Error('Failed to search for products. Please try again.');
   }
