@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react"
 import { speakSustainabilityIntro } from '../services/elevenLabsService';
 import { useVoiceSettings } from '../context/VoiceSettingsContext';
+import VoiceSettingsModal from '../components/VoiceSettingsModal';
 
 // --- Progress bar component ---
 const ProgressBar: React.FC<{ label: string; percentage: number }> = ({ label, percentage }) => (

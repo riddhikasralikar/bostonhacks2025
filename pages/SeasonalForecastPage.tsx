@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { predictSeasonalTrends } from '../services/geminiService';
 import { speakSeasonalForecast } from '../services/elevenLabsService';
 import { useVoiceSettings } from '../context/VoiceSettingsContext';
+import VoiceSettingsModal from '../components/VoiceSettingsModal';
 import type { Trend } from '../types';
 import TrendResultCard from '../components/TrendResultCard';
 
