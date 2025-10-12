@@ -279,19 +279,19 @@ const SustainabilityPage: React.FC = () => {
                             title="5 Upcycling Projects for Beginners! | DIY Clothes Easy Sewing"
                             duration="8:21"
                             url="https://www.youtube.com/watch?v=zoMY4fJN1aU"
-                            thumbnail="picture-1.png"
+                            thumbnail="https://i.ytimg.com/vi/zoMY4fJN1aU/maxresdefault.jpg"
                         />
                         <VideoCard
                             title="UPCYCLING TUTORIAL: Button Up Dress Shirt to Flowy Summer Top | trashnfashn"
                             duration="6:42"
                             url="https://www.youtube.com/watch?v=KyDXE89Tyfo"
-                            thumbnail="picture-3.png"
+                            thumbnail="https://i.ytimg.com/vi/KyDXE89Tyfo/sddefault.jpg"
                         />
                         <VideoCard
                             title="How To Thrift Flip Clothes for BEGINNERS | Easy Step-by-Step Guide"
                             duration="16:55"
                             url="https://www.youtube.com/watch?v=_oqBPG_lDvc"
-                            thumbnail="picture-2.png"
+                            thumbnail="https://i.ytimg.com/vi/_oqBPG_lDvc/maxresdefault.jpg"
                         />
                     </div>
                 </section>
@@ -300,10 +300,10 @@ const SustainabilityPage: React.FC = () => {
                 <section>
                     <h2 className="text-3xl font-bold text-center mb-8 tracking-tight">Eco-Friendly Brands We ♡</h2>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                        <BrandCard name="Patagonia" image="Patagonia-Logo-Old.png" url="https://www.patagonia.com" />
-                        <BrandCard name="Everlane" image="everlane_logo.jpg" url="https://www.everlane.com" />
-                        <BrandCard name="Etsy" image="Etsy-Emblem.png" url="https://www.etsy.com" />
-                        <BrandCard name="Allbirds" image="OIP.webp" url="https://www.allbirds.com" />
+                        <BrandCard name="Patagonia" image="https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcSc5VfV21cVFXHomt2TWZFB1SS9RqtLor3MSxKoD_PnV4FdHH5z" url="https://www.patagonia.com" />
+                        <BrandCard name="Everlane" image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTIoRJ_ti0hhwqwZL7bLTVZpA8ZwYhn85XwWZNozsNf9T9-9KQd" url="https://www.everlane.com" />
+                        <BrandCard name="Etsy" image="https://picklerooms.com/cdn/shop/articles/Etsy_21dfd081-e319-44ce-9541-eeccb1363f6f.png?v=1701902752" url="https://www.etsy.com" />
+                        <BrandCard name="Allbirds" image="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcThQCuLEUWLtzaD_zqio9LW-hDusO0jVuEFXOK9eKTFUXy1DiXl" url="https://www.allbirds.com" />
                     </div>
                 </section>
             </div>
