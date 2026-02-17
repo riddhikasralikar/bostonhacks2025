@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { predictTrendsFromImages } from '../services/geminiService';
 import { speakUploadMessage, speakTrendResults } from '../services/elevenLabsService';
 import { useVoiceSettings } from '../context/VoiceSettingsContext';
@@ -16,12 +16,12 @@ const PlusIcon: React.FC = () => (
 );
 
 const SpeakerIcon: React.FC<{ isPlaying: boolean }> = ({ isPlaying }) => (
-    <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        fill="none" 
-        viewBox="0 0 24 24" 
-        strokeWidth={1.5} 
-        stroke="currentColor" 
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+        stroke="currentColor"
         className={`w-6 h-6 ${isPlaying ? 'animate-pulse' : ''}`}
     >
         <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
@@ -44,22 +44,63 @@ const DashboardPage: React.FC = () => {
     const [loadingMessage, setLoadingMessage] = useState<string>('');
     const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-    
+
     // Shopping states
     const [selectedTiers, setSelectedTiers] = useState<('luxury' | 'mid' | 'accessible')[]>(['accessible', 'mid']);
     const [shoppingResults, setShoppingResults] = useState<ShoppingResultsType | null>(null);
     const [isLoadingShopping, setIsLoadingShopping] = useState(false);
-    
+
     const { settings } = useVoiceSettings();
+
+    useEffect(() => {
+        const handlePaste = async (e: ClipboardEvent) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
+            const imageFiles: File[] = [];
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    const file = item.getAsFile();
+                    if (file) imageFiles.push(file);
+                }
+            }
+
+            if (imageFiles.length === 0) return;
+
+            setFiles(imageFiles);
+            const newPreviews = imageFiles.map(file => URL.createObjectURL(file));
+            setPreviews(newPreviews);
+            setTrends(null);
+            setShoppingResults(null);
+            setError(null);
+
+            try {
+                setIsSpeaking(true);
+                await speakUploadMessage(
+                    settings.selectedStylist.voiceId,
+                    settings.selectedLanguage.code,
+                    settings.volume,
+                    settings.isMuted
+                );
+                setIsSpeaking(false);
+            } catch (err) {
+                console.error("Voice error:", err);
+                setIsSpeaking(false);
+            }
+        };
+
+        window.addEventListener('paste', handlePaste);
+        return () => window.removeEventListener('paste', handlePaste);
+    }, [settings]);
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files) {
             const selectedFiles = [...event.target.files];
             setFiles(selectedFiles);
-            
+
             const newPreviews = selectedFiles.map(file => URL.createObjectURL(file));
             setPreviews(newPreviews);
-            
+
             setTrends(null);
             setShoppingResults(null); // Reset shopping results when new images are uploaded
             setError(null);
@@ -142,7 +183,7 @@ const DashboardPage: React.FC = () => {
 
         setIsLoadingShopping(true);
         setError(null);
-        
+
         try {
             const results = await searchAndCategorizeForTrends(trends, {
                 selectedTiers,
@@ -160,9 +201,9 @@ const DashboardPage: React.FC = () => {
     return (
         <div className="container mx-auto px-6 py-12">
             {/* Voice Settings Modal */}
-            <VoiceSettingsModal 
-                isOpen={isSettingsOpen} 
-                onClose={() => setIsSettingsOpen(false)} 
+            <VoiceSettingsModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
             />
 
             {/* Settings Button - Fixed position */}
@@ -199,7 +240,7 @@ const DashboardPage: React.FC = () => {
                 <h1 className="text-4xl font-bold tracking-tight">Stylist Dashboard</h1>
                 <p className="text-lg text-gray-600 mt-2">Upload your style inspiration to get started.</p>
             </div>
-            
+
             <div className="max-w-4xl mx-auto">
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-6">
                     <input
@@ -213,7 +254,7 @@ const DashboardPage: React.FC = () => {
                     <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center">
                         <PlusIcon />
                         <span className="mt-2 text-sm font-medium text-gray-600">
-                            {previews.length > 0 ? `${previews.length} images selected` : 'Click to upload your Pinterest board images'}
+                            {previews.length > 0 ? `${previews.length} images selected` : 'Click or paste (Cmd+V) to upload your Pinterest board images'}
                         </span>
                         <span className="text-xs text-gray-500">PNG, JPG, WEBP</span>
                     </label>
@@ -224,14 +265,14 @@ const DashboardPage: React.FC = () => {
                         <h3 className="text-lg font-semibold mb-4 text-center">Image Preview:</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {previews.map((src, index) => (
-                                <img key={index} src={src} alt={`Preview ${index}`} className="w-full h-auto object-cover rounded-md aspect-square"/>
+                                <img key={index} src={src} alt={`Preview ${index}`} className="w-full h-auto object-cover rounded-md aspect-square" />
                             ))}
                         </div>
                     </div>
                 )}
-                
+
                 <div className="text-center">
-                     <button
+                    <button
                         onClick={handlePredict}
                         disabled={isLoading || files.length === 0}
                         className="px-12 py-4 bg-black text-white font-semibold tracking-wider uppercase border border-black hover:bg-white hover:text-black transition-colors duration-300 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
@@ -242,21 +283,21 @@ const DashboardPage: React.FC = () => {
             </div>
 
             {isLoading && (
-                 <div className="text-center py-12">
+                <div className="text-center py-12">
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
                     <p className="mt-4 text-gray-600">{loadingMessage}</p>
-                 </div>
+                </div>
             )}
-            
+
             {error && <p className="text-center text-red-500 mt-8">{error}</p>}
-            
+
             {trends && (
                 <>
                     <div className="mt-16">
                         <h2 className="text-3xl font-bold text-center mb-8 tracking-tight">Your Predicted Trends</h2>
                         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                             {trends.map((trend, index) => (
-                               <TrendResultCard key={index} trend={trend} index={index}/>
+                                <TrendResultCard key={index} trend={trend} index={index} />
                             ))}
                         </div>
                     </div>
@@ -264,8 +305,8 @@ const DashboardPage: React.FC = () => {
                     {/* Shopping Section */}
                     <div className="mt-16 border-t pt-16">
                         <h2 className="text-3xl font-bold text-center mb-8">Find Your Perfect Pieces</h2>
-                        
-                        <TierSelector 
+
+                        <TierSelector
                             selectedTiers={selectedTiers}
                             onChange={setSelectedTiers}
                         />
@@ -288,7 +329,7 @@ const DashboardPage: React.FC = () => {
                         )}
 
                         {shoppingResults && (
-                            <ShoppingResults 
+                            <ShoppingResults
                                 results={shoppingResults}
                                 selectedTiers={selectedTiers}
                             />
