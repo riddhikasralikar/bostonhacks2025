@@ -33,7 +33,7 @@ Example format: ["flowy maxi dress", "chunky gold hoops", "oversized blazer"]
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.0-flash",
       contents: {
         parts: [{ text: prompt }],
       },
