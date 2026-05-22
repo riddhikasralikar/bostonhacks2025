@@ -46,7 +46,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         inlineData: { data: img.base64, mimeType: img.mimeType },
       }));
       const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         contents: {
           parts: [
             ...imageParts,
@@ -60,7 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (type === 'seasonal') {
       const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         contents: { parts: [{ text: `You are a world-class fashion trend forecaster. Predict the 4 most important fashion trends for ${getNextSeason()}. Return JSON matching the schema.` }] },
         config: { responseMimeType: 'application/json', responseSchema: trendSchema },
       });
@@ -70,7 +70,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (type === 'queries') {
       const prompt = `Given this fashion trend:\n- Name: "${trend.trendName}"\n- Description: ${trend.description}\n\nGenerate ${count ?? 10} diverse shopping search queries. Return ONLY a JSON array of strings.\n\nExample: ["flowy maxi dress", "chunky gold hoops"]`;
       const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         contents: { parts: [{ text: prompt }] },
       });
       const text = response.text.trim().replace(/```json|```/g, '').trim();
