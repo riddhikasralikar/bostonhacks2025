@@ -62,7 +62,7 @@ export const predictTrendsFromImages = async (
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash-lite",
       contents: {
         parts: [
           ...imageParts,
@@ -117,7 +117,7 @@ export const predictSeasonalTrends = async (): Promise<Trend[]> => {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash-lite",
       contents: { parts: [{ text: prompt }] },
       config: {
         responseMimeType: "application/json",
