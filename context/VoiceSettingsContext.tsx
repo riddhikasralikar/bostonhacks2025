@@ -79,7 +79,7 @@ const VoiceSettingsContext = createContext<VoiceSettingsContextType | undefined>
 
 export const VoiceSettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<VoiceSettings>({
-    isMuted: false,
+    isMuted: true,
     selectedStylist: AVAILABLE_STYLISTS[0],
     selectedLanguage: AVAILABLE_LANGUAGES[0],
     volume: 1.0,
